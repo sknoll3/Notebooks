@@ -1,0 +1,196 @@
+---
+title: Does leading the most laps lead to wins?
+author: Sam Knoll
+date: '2022-03-24'
+slug: leading-laps-leads-to-wins
+categories: []
+tags: []
+---
+In NASCAR the line of weather or no you win a race is one that is very small. There have been multiple cases of when a drive could lead every stage of the race and still end up losing because of a flat tire or a caution that takes them out of the race. It might cause just the little bit of damage that ends their night. 
+
+So I was wondering does leading the most laps in a season really lead to the most wins?
+
+When looking for the answer to this question I stumbled on to the season of Denny Hamlin which turned out to be one of his best as he finished second in points to Kyle Larson. As you are about to see Hamlin really should have maybe won a few more races and even won the championship but couldn't walk away with it. 
+
+Last season in NASCAR it saw Kyle Larson dominate the sport from the beginning of the year until the end. Naturally he did lead the most laps and this led to ten wins on the season ultimately the season championship. Someone interesting to look at though is Denny Hamlin. Hamlin last season had one of his best seasons stats wise as as he was able to lead the second most laps on the season. You would think that he had to be right there along side Larson but instead Hamlin only won two races last season. 
+
+So naturally you think man what went wrong with Hamiln he should have won more races and this is just what NASCAR margin of error is so high and Hamlin was in the wrong side of that error a lot of the time last season. Hamlin should have won at least two or three more races just take a look at Martin Truex Jr. Truex last season lead on 9.5% of the laps he raced last season and still won two more races than Hamlin. 
+
+
+```{r echo=FALSE}
+library(tidyverse)
+library(gt)
+library(ggrepel)
+library(scales)
+
+```
+
+```{r echo=FALSE}
+logs <- read_csv("data/nascardata.csv")
+```
+
+
+```{r echo=FALSE}
+logs2 <- logs %>%
+  filter(TL > 7000)
+  
+```
+
+```{r echo=FALSE}
+postions <- logs2 %>%
+  select(Driver, WINS, LL, `%LL`, TL) 
+```
+
+```{r echo=FALSE}
+topLL <- postions %>%
+  arrange(desc(LL)) %>%
+  top_n(10, LL)
+ 
+```
+
+
+```{r echo=FALSE}
+topLL %>%
+  gt() %>%
+  cols_label(
+    WINS = "Wins",
+    LL = "Laps Lead",
+    `%LL` = "Laps Lead PCT",
+    TL = "Total Laps"
+  ) %>%
+  tab_header(
+    title = "Denny Hamiln's 2021 season was disapointing to say the least.",
+    subtitle = "Hamiln was second in Laps Lead but only won two races compared to other drivers."
+  ) %>%
+  tab_style(
+    style = cell_text(color = "black", weight = "bold", align = "left"),
+    locations = cells_title("title")
+  ) %>%
+  tab_style(
+    style = cell_text(color = "black", align = "left"),
+    locations = cells_title("subtitle")
+  ) %>%
+  tab_source_note(
+    source_note = md("**By:** Sam Knoll  |  **Source:** [NASCAR.com](https://www.nascar.com/stats/2021/1/box-score)")
+  ) %>%
+  tab_style(
+     locations = cells_column_labels(columns = everything()),
+     style = list(
+       cell_borders(sides = "bottom", weight = px(3)),
+       cell_text(weight = "bold", size=12)
+     )
+   ) %>%
+  opt_row_striping() %>% 
+  opt_table_lines("none") %>%
+  tab_style(
+    style = list(
+      cell_fill(color = "purple"),
+      cell_text(color = "orange")
+      ),
+    locations = cells_body(
+      rows = Driver == "Denny Hamlin")
+  ) %>%
+  tab_style(
+    style = list(
+      cell_fill(color = "black"),
+      cell_text(color = "orange")
+      ),
+    locations = cells_body(
+      rows = Driver == "Martin Truex Jr.")
+  )
+```
+Now racing isn't all about leading laps as you can see with Hamlin only winning two races after leading the second amount of laps. Racing is all about where you are in the field of cars. Many drivers talk about how the racing at the back of the field is just as hard has it is at the front. It is also more risky to be in the back of the field as well. The cars back there are willing to do whatever to get to the front whereas the cars in the front of the field are there trying to stay there and they are more passive than anything. 
+
+So it is pretty simple with that thinking if you are in the middle of the pack at the middle of the race you are more likely to get wrecked than if you are in the front of the pack.
+
+Lets take a look again at Denny Hamlin who once again shows us that he should have won more races last season. Hamlin was second in average mid race position compared to the rest of the drivers. While the series champion Kyle Larson was 4th almost two whole positions off of what Hamlin's was. I think we are starting to get the picture here Hamlin really should have been the series champion. 
+
+Another driver to look at is William Byron as at the middle of the race his average position was 8.9 and he just like Hamlin has not a lot of wins to show for it as well only winning one race last season. The problem for Byron was finishing the race as his average finish was 13.7 which is almost 5 off of his mid race average. 
+
+```{r echo=FALSE}
+midpos <- logs2 %>%
+  select(Driver, WINS, LL,`%LL`, AMR,) %>%
+  arrange(desc(-AMR)) %>%
+  top_n(5, -AMR)
+```
+
+
+
+```{r echo=FALSE}
+ggplot() + 
+  geom_point(
+    data=logs2, 
+    aes(x=AMR, y=`%LL`, size=WINS), 
+    color="grey") + 
+  geom_point(
+    data=midpos, 
+    aes(x=AMR, y=`%LL`, size=WINS), 
+    color="red") + 
+  geom_text_repel(
+    data=midpos, 
+    aes(x=AMR, y=`%LL`, label=Driver)
+  ) +
+  xlim(8.0, 35) +
+  ylim(0, 30) +
+  geom_vline(xintercept = 17.90909) +
+  labs(title="Denny Hamlins season continues to be below expectations.", 
+       subtitle="Besides leading laps Hamlin had the second best average mid race lap postion", 
+       caption="Source: NASCAR.com | By Sam Knoll",
+       x= "Average Mid Race Positon",
+       y= "Laps Lead Percentage")  + 
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 8), 
+    plot.subtitle = element_text(size=10), 
+    panel.grid.minor = element_blank()
+    )
+
+```
+Now you might be wondering to did Hamlin just like Byron have a worse finishing postion and that solves the question on why he didn't win more races. You would be wrong with that thought as Hamlin actally had the best finishing position out of all drivers as well. With his 8.5 finishing postion he is almost a whole position ahead of Kyle Larson who was at 9.1. 
+
+Besides Hamlin, Kevin Harvick was in the same boat as well as he had an average finish of 10.9 but during the season had ZERO wins. For Harvick the biggest issue though is the fact that he only lead a total of 217 laps all seaosn. 
+
+
+
+```{r echo=FALSE}
+averagefinish <- logs2 %>%
+  select(Driver, WINS, LL,`%LL`, AF) %>%
+  arrange(desc(-AF)) %>%
+  top_n(5, -AF)
+```
+
+
+
+```{r echo=FALSE}
+ggplot() + 
+  geom_point(
+    data=logs2, 
+    aes(x=AF, y=`%LL`, size=WINS), 
+    color="grey") + 
+  geom_point(
+    data=averagefinish, 
+    aes(x=AF, y=`%LL`, size=WINS), 
+    color="red") + 
+  geom_text_repel(
+    data=averagefinish, 
+    aes(x=AF, y=`%LL`, label=Driver)
+  ) +
+  xlim(8.0, 35) +
+  ylim(0, 30) +
+  geom_vline(xintercept = 18.02424) +
+  labs(title="Denny Hamlin again leads the pack.", 
+       subtitle="Hamiln had a better finishing position than the sereis champion but only won two races.", 
+       caption="Source: NASCAR.com | By Sam Knoll",
+       x= "Average Finishing Position",
+       y= "Laps Lead Percentage")  + 
+  theme_minimal() + 
+  theme(
+    plot.title = element_text(size = 16, face = "bold"),
+    axis.title = element_text(size = 8), 
+    plot.subtitle = element_text(size=10), 
+    panel.grid.minor = element_blank()
+    )
+```
+
+In the end Denny Hamlin's 2021 season will be looked as one that had so much potential with the way he raced. In every sense of the word Hamlin really should have the trophy on the mantle. He did everything you needed to to win races. He lead laps, was in the front of the pack at the middle of the race and finished there as well. Hopefully his 2022 season will see some better successes than last season did. 
